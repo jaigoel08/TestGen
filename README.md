@@ -48,7 +48,7 @@ TestGEn is a sophisticated tool designed to automate the initial phases of QA en
     Create a `.env` file in the root (refer to `.env.example`):
     ```env
     # LLM API Keys
-    GOOGLE_GENAI_API_KEY=your_key_here
+    GEMINI_API_KEY=your_key_here
 
     # Vector DB (Chroma Cloud)
     CHROMA_API_KEY=your_chroma_api_key

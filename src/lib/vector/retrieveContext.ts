@@ -69,9 +69,9 @@ function getClient(): CloudClient {
 
 function getEmbedder(): GeminiEmbedder {
   if (!_embedder) {
-    const key = process.env.GOOGLE_GENAI_API_KEY ?? '';
+    const key = process.env.GEMINI_API_KEY ?? '';
     if (!key || key === 'your_google_genai_api_key_here') {
-      throw new Error('GOOGLE_GENAI_API_KEY is not configured.');
+      throw new Error('GEMINI_API_KEY is not configured.');
     }
     _embedder = new GeminiEmbedder(key);
   }

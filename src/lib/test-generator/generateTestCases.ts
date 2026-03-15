@@ -9,10 +9,10 @@ import { UIContext } from '../vector/retrieveContext';
  * @returns A string containing the generated test cases in a structured format.
  */
 export async function generateTestCases(context: UIContext, featureName: string): Promise<string> {
-  const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey || apiKey === 'your_google_genai_api_key_here') {
-    return 'Error: GOOGLE_GENAI_API_KEY is not configured in the .env file. Please provide a valid API key to generate test cases.';
+    return 'Error: GEMINI_API_KEY is not configured in the .env file. Please provide a valid API key to generate test cases.';
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
