@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postinstall": "playwright install",
+    "test": "playwright test",
     "start": "next start",
     "lint": "eslint"
   },
