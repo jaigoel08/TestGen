@@ -30,8 +30,6 @@ export default function Home() {
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const BACKEND_URL = "http://localhost:3001";
-
   const handleGenerate = async () => {
     if (!url || !feature) return;
 
@@ -40,7 +38,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/generate-tests`, {
+      const response = await fetch("/api/generate-tests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -247,13 +245,13 @@ export default function Home() {
                       </div>
                       <div className="relative group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
                         <img 
-                          src={result.screenshotUrl?.startsWith('/') ? `${BACKEND_URL}${result.screenshotUrl}` : result.screenshotUrl} 
+                          src={result.screenshotUrl} 
                           alt="Page Preview" 
                           className="w-full h-auto max-h-[400px] object-cover object-top transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                            <a 
-                             href={result.screenshotUrl?.startsWith('/') ? `${BACKEND_URL}${result.screenshotUrl}` : result.screenshotUrl} 
+                             href={result.screenshotUrl} 
                              target="_blank" 
                              className="text-white text-xs font-medium bg-zinc-900/80 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-md"
                            >
