@@ -1,4 +1,4 @@
-import { CloudClient, EmbeddingFunction } from 'chromadb';
+import { ChromaClient, EmbeddingFunction } from 'chromadb';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -45,10 +45,10 @@ class GeminiEmbedder implements EmbeddingFunction {
 
 const COLLECTION_NAME = process.env.CHROMA_COLLECTION_NAME ?? 'ui-contexts';
 
-let _chromaClient: CloudClient | null = null;
+let _chromaClient: ChromaClient | null = null;
 let _embedder: GeminiEmbedder | null = null;
 
-function getClient(): CloudClient {
+function getClient(): ChromaClient {
   if (!_chromaClient) {
     const apiKey = process.env.CHROMA_API_KEY;
     const tenant = process.env.CHROMA_TENANT;
@@ -58,10 +58,16 @@ function getClient(): CloudClient {
       throw new Error('Chroma Cloud credentials (API Key, Tenant, Database) are not configured in .env');
     }
 
-    _chromaClient = new CloudClient({
-      apiKey,
+    console.log(`[Chroma] Initializing client for ${tenant}/${database} at api.trychroma.com (Context Store)`);
+    _chromaClient = new ChromaClient({
+      host: "api.trychroma.com",
+      port: 443,
+      ssl: true,
       tenant,
-      database
+      database,
+      headers: {
+        "x-chroma-token": apiKey
+      }
     });
   }
   return _chromaClient;

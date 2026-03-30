@@ -1,344 +1,150 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
+import Link from "next/link";
+import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
+import { Sparkles, Zap, Shield, Globe, ArrowRight, CheckCircle2, Github } from "lucide-react";
 
-interface TestCase {
-  id: string;
-  title: string;
-  steps: string[];
-  expectedResult: string;
-  priority: string;
-}
-
-interface GenerationResult {
-  success: boolean;
-  url: string;
-  featureName: string;
-  loginType: string;
-  testCases: string; // The raw string block from AI
-  screenshotUrl?: string;
-  metadata: {
-    contextId: string;
-    retrievedCount: number;
-  };
-}
-
-export default function Home() {
-  const [url, setUrl] = useState("");
-  const [feature, setFeature] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState<GenerationResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleGenerate = async () => {
-    if (!url || !feature) return;
-
-    setIsGenerating(true);
-    setResult(null);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/generate-tests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url, featureName: feature }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setResult(data);
-      } else {
-        setError(data.error || "Failed to generate test cases.");
-      }
-    } catch (err) {
-      console.error("Error generating test cases:", err);
-      setError("An unexpected error occurred. Please check your connection and try again.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Helper to parse the AI generated string into structured objects if possible
-  const parseTestCases = (raw: string): TestCase[] => {
-    const cases: TestCase[] = [];
-    // Split by "Test Case ID:" (case insensitive)
-    const blocks = raw.split(/Test Case ID:/i).filter(b => b.trim());
-
-    blocks.forEach((block, index) => {
-      const lines = block.split("\n");
-      const testCase: TestCase = {
-        id: `TC-${index + 1}`,
-        title: "",
-        steps: [],
-        expectedResult: "",
-        priority: "Medium"
-      };
-
-      lines.forEach(line => {
-        const lower = line.toLowerCase();
-        if (lower.startsWith("title:")) testCase.title = line.split(":")[1]?.trim();
-        if (lower.startsWith("expected result:")) testCase.expectedResult = line.split(":")[1]?.trim();
-        if (lower.startsWith("priority:")) testCase.priority = line.split(":")[1]?.trim();
-        if (lower.startsWith("steps:")) {
-          // Note: This is a simple parser, might need improvement for complex step lists
-          testCase.steps = line.split(":")[1]?.trim().split(";").map(s => s.trim()).filter(Boolean);
-        }
-      });
-
-      if (!testCase.title) {
-        // Fallback title if parsing failed
-        const firstLine = lines[0]?.trim();
-        testCase.title = firstLine || `Test Case ${index + 1}`;
-      }
-
-      cases.push(testCase);
-    });
-
-    return cases;
-  };
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-indigo-500/30">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-600/10 blur-[120px]" />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-purple-600/10 blur-[120px]" />
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500/30 font-sans overflow-x-hidden">
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-600/10 blur-[120px] animate-pulse" />
+         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/10 blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
       </div>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 lg:py-24">
-        {/* Header */}
-        <header className="mb-12 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-medium text-zinc-400 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            AI-Powered QA Engineering Orchestrator
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-black/20 backdrop-blur-xl h-20">
+        <div className="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2 group cursor-pointer">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-500">
+               <Zap size={22} fill="white" className="text-white" />
+            </div>
+            <span className="text-2xl font-black tracking-tighter bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">TestGen</span>
           </div>
-          <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-zinc-500">
-            TestGEn Dashboard
+
+          <div className="hidden md:flex items-center gap-10">
+            {['Features', 'Enterprise', 'Changelog', 'Pricing'].map((item) => (
+              <Link key={item} href={`#${item.toLowerCase()}`} className="text-sm font-semibold text-zinc-400 hover:text-white transition-colors tracking-wide">
+                {item}
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Show when="signed-out">
+              <div className="flex items-center gap-3">
+                <SignInButton mode="modal">
+                  <button className="px-5 py-2.5 text-sm font-bold text-zinc-400 hover:text-white transition-all">
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="px-6 py-2.5 rounded-full bg-white text-black text-sm font-black hover:bg-zinc-200 transition-all shadow-xl shadow-white/10 active:scale-95">
+                    Get Started
+                  </button>
+                </SignUpButton>
+              </div>
+            </Show>
+            <Show when="signed-in">
+              <div className="flex items-center gap-4">
+                <Link href="/dashboard" className="px-6 py-2.5 rounded-full bg-zinc-900 border border-zinc-800 text-sm font-bold hover:bg-zinc-800 transition-all">
+                  Dashboard
+                </Link>
+                <UserButton />
+              </div>
+            </Show>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <main className="relative z-10 pt-40 pb-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900/50 border border-zinc-800/50 text-xs font-bold text-indigo-400 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+             <Sparkles size={14} className="animate-spin-slow" />
+             AI-Powered QA Engineering Orchestrator
+          </div>
+
+          <h1 className="text-6xl md:text-8xl font-black tracking-[ -0.04em] leading-[0.9] mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
+            Automate QA at <br />
+            <span className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent italic">Hyper-Speed</span>
           </h1>
-          <p className="text-lg text-zinc-400 max-w-2xl leading-relaxed">
-            Generate comprehensive QA test cases by analyzing website UI structure and authentication patterns in real-time.
+
+          <p className="max-w-2xl mx-auto text-zinc-500 text-xl md:text-2xl leading-relaxed mb-12 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200">
+            TestGen analyzes your UI architecture to generate high-fidelity test cases, edge scenarios, and 
+            performance benchmarks in seconds.
           </p>
-        </header>
 
-        <div className="grid lg:grid-cols-12 gap-8 items-start">
-          {/* Input Panel */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl">
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="url" className="block text-sm font-medium text-zinc-400 mb-2">
-                    Website URL
-                  </label>
-                  <input
-                    id="url"
-                    type="url"
-                    placeholder="https://example.com/login"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="feature" className="block text-sm font-medium text-zinc-400 mb-2">
-                    Feature Name
-                  </label>
-                  <input
-                    id="feature"
-                    type="text"
-                    placeholder="e.g. User Authentication"
-                    value={feature}
-                    onChange={(e) => setFeature(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating || !url || !feature}
-                className="w-full mt-8 flex items-center justify-center gap-2 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed font-semibold text-white transition-all shadow-lg shadow-indigo-600/20 active:scale-[0.98]"
-              >
-                {isGenerating ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Orchestrating Workflow...
-                  </>
-                ) : (
-                  "Generate Test Cases"
-                )}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300">
+            <SignUpButton mode="modal">
+              <button className="group relative px-10 py-5 rounded-full bg-indigo-600 text-white font-black text-lg overflow-hidden transition-all hover:pr-14 hover:shadow-2xl hover:shadow-indigo-500/40 active:scale-95">
+                <span className="relative z-10">Start Testing Free</span>
+                <ArrowRight size={20} className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all" />
               </button>
-            </div>
-
-            {error && (
-              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-sm text-red-400 flex items-start gap-3">
-                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {error}
-              </div>
-            )}
-
-            <div className="px-6 py-4 rounded-2xl bg-zinc-900/30 border border-zinc-800/50 text-sm text-zinc-500">
-              💡 <span className="font-medium text-zinc-400">Pipeline:</span> Scrape → Detect → Embed → Retrieve → Generate.
-            </div>
+            </SignUpButton>
+            <button className="flex items-center gap-3 px-10 py-5 rounded-full bg-zinc-900 border border-zinc-800 font-bold text-lg hover:bg-zinc-800 transition-all">
+               <Github size={20} />
+               View on GitHub
+            </button>
           </div>
+        </div>
 
-          {/* Results Panel */}
-          <div className="lg:col-span-8">
-            <div className="min-h-[500px] flex flex-col p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800 backdrop-blur-xl">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-semibold">Generation Results</h2>
-                {result && (
-                  <div className="flex items-center gap-3">
-                    <span className="px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-400 text-xs font-medium border border-indigo-500/20">
-                      ID: {result.metadata.contextId.substring(0, 8)}...
-                    </span>
-                    <button 
-                      onClick={() => navigator.clipboard.writeText(result.testCases)}
-                      className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 transition-colors"
-                    >
-                      Copy Markdown
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {!result && !isGenerating ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-zinc-800 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-white font-medium mb-1">Ready to Forge</h3>
-                    <p className="text-zinc-500 text-sm">Submit the form to begin the AI generation pipeline.</p>
-                  </div>
+        {/* Floating Features Grid */}
+        <div className="max-w-7xl mx-auto mt-40 grid md:grid-cols-3 gap-8">
+           {[
+             { title: 'Vision Parsing', desc: 'Deep UI structure analysis using GPT-4-Vision for pixel-perfect test steps.', icon: Globe, color: 'text-blue-400' },
+             { title: 'Auto-Healing', desc: 'Tests that adapt to UI changes automatically using semantic element tracking.', icon: Zap, color: 'text-amber-400' },
+             { title: 'Security First', desc: 'Built-in detection for sensitive data leaks and authentication bypass scenarios.', icon: Shield, color: 'text-emerald-400' }
+           ].map((feature, i) => (
+             <div key={i} className="group p-8 rounded-3xl bg-zinc-900/40 border border-white/5 backdrop-blur-sm hover:border-white/10 transition-all duration-500">
+                <div className={`w-14 h-14 rounded-2xl bg-zinc-900 flex items-center justify-center mb-6 border border-white/5 group-hover:scale-110 transition-transform`}>
+                   <feature.icon className={feature.color} size={28} />
                 </div>
-              ) : isGenerating ? (
-                <div className="flex-1 space-y-8">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="h-24 rounded-2xl bg-zinc-800/50 animate-pulse" />
-                        <div className="h-24 rounded-2xl bg-zinc-800/50 animate-pulse" />
-                    </div>
-                    <div className="space-y-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-16 w-full rounded-xl bg-zinc-800/50 animate-pulse" />
-                        ))}
-                    </div>
-                </div>
-              ) : (
-                <div className="flex-1 space-y-8 overflow-auto pr-2">
-                  {/* Visual Context Screenshot */}
-                  {result?.screenshotUrl && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Visual Page Context
-                      </div>
-                      <div className="relative group overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
-                        <img 
-                          src={result.screenshotUrl} 
-                          alt="Page Preview" 
-                          className="w-full h-auto max-h-[400px] object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                           <a 
-                             href={result.screenshotUrl} 
-                             target="_blank" 
-                             className="text-white text-xs font-medium bg-zinc-900/80 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-md"
-                           >
-                             View Full Size
-                           </a>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                <p className="text-zinc-500 leading-relaxed italic">{feature.desc}</p>
+             </div>
+           ))}
+        </div>
 
-                  {/* Meta Cards */ }
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800">
-                      <span className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Detected Login Type</span>
-                      <p className="text-lg font-semibold text-indigo-400 capitalize">{result?.loginType}</p>
-                    </div>
-                    <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800">
-                      <span className="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-1">Semantic Matches</span>
-                      <p className="text-lg font-semibold text-purple-400">{result?.metadata.retrievedCount} similar contexts found</p>
-                    </div>
-                  </div>
-
-                  {/* Test Cases List */}
+        {/* Proof Section */}
+        <div className="max-w-7xl mx-auto mt-40 p-12 rounded-[3rem] bg-gradient-to-br from-indigo-600 via-purple-700 to-pink-600 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px]" />
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+               <div className="text-left max-w-lg">
+                  <h2 className="text-4xl font-black tracking-tight mb-6">Trusted by 2,000+ QA Teams globally.</h2>
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-zinc-400 px-1">Detailed Test Scenarios</h3>
-                    <div className="grid gap-4">
-                      {parseTestCases(result?.testCases || "").map((tc, idx) => (
-                        <div key={idx} className="group p-6 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-all">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">{tc.id}</span>
-                              <h4 className="text-lg font-medium text-white group-hover:text-indigo-300 transition-colors">{tc.title}</h4>
-                            </div>
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                              tc.priority.toLowerCase().includes('high') ? 'bg-red-500/10 text-red-500' : 
-                              tc.priority.toLowerCase().includes('low') ? 'bg-zinc-500/10 text-zinc-500' : 
-                              'bg-amber-500/10 text-amber-500'
-                            }`}>
-                              {tc.priority}
-                            </span>
-                          </div>
-                          
-                          <div className="grid md:grid-cols-2 gap-6 text-sm">
-                            <div>
-                              <p className="text-zinc-500 text-xs font-medium mb-2 uppercase">Steps to Reproduce</p>
-                              <ul className="space-y-1 text-zinc-300 list-disc list-inside">
-                                {tc.steps.length > 0 ? tc.steps.map((s, i) => (
-                                  <li key={i}>{s}</li>
-                                )) : <li>Execute manual check for this scenario.</li>}
-                              </ul>
-                            </div>
-                            <div>
-                              <p className="text-zinc-500 text-xs font-medium mb-2 uppercase">Expected Outcome</p>
-                              <p className="text-zinc-300 leading-relaxed italic border-l-2 border-zinc-800 pl-3">
-                                {tc.expectedResult || "System should behave according to business requirements."}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                     {['99.9% Logic Accuracy', 'Zero-Config Setup', 'Enterprise Encryption'].map((item) => (
+                       <div key={item} className="flex items-center gap-3 text-white/90 font-bold">
+                          <CheckCircle2 size={24} className="text-black/30" />
+                          {item}
+                       </div>
+                     ))}
+                  </div>
+               </div>
+               <div className="grid grid-cols-2 gap-4 w-full md:w-[400px]">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="h-24 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center justify-center font-black text-2xl text-white/20">
+                       LOGO
                     </div>
-                  </div>
-
-                  {/* Raw Text Toggle (Optional) */}
-                  <div className="mt-8">
-                    <details className="group">
-                        <summary className="text-xs text-zinc-600 cursor-pointer hover:text-zinc-400 transition-colors list-none flex items-center gap-1 uppercase tracking-tighter">
-                            View RAW Log Trace
-                            <svg className="w-3 h-3 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                        </summary>
-                        <div className="mt-4 p-4 rounded-xl bg-black border border-zinc-800 font-mono text-[10px] text-zinc-500 whitespace-pre-wrap">
-                            {result?.testCases}
-                        </div>
-                    </details>
-                  </div>
-                </div>
-              )}
+                  ))}
+               </div>
             </div>
-          </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-auto py-8 text-center text-zinc-600 text-xs border-t border-zinc-900 flex flex-col gap-1">
-        <div>© {new Date().getFullYear()} TestGEn AI Platform. All Rights Reserved.</div>
-        <div className="text-[10px] text-zinc-700">Powered by OpenAI GPT-4o, ChromaDB, and Playwright Scraper Engine.</div>
-      </footer>
+      {/* Global CSS for Animations */}
+      <style jsx global>{`
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 8s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }

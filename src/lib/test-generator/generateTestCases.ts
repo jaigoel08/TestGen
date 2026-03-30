@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateWithFallback } from '../gemini';
 import { UIContext } from '../vector/retrieveContext';
 
 /**
@@ -9,19 +9,16 @@ import { UIContext } from '../vector/retrieveContext';
  * @returns A string containing the generated test cases in a structured format.
  */
 export async function generateTestCases(context: UIContext, featureName: string): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey || apiKey === 'your_google_genai_api_key_here') {
-    return 'Error: GEMINI_API_KEY is not configured in the .env file. Please provide a valid API key to generate test cases.';
-  }
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-
   const prompt = `
 You are a senior QA engineer.
 
-Based on this website functionality, generate comprehensive test cases for the feature: "${featureName}".
+FIRST, validate if the feature: "${featureName}" is actually present or relevant to the provided UI context for the page: "${context.url}".
+Check the provided buttons, links, and input fields.
+
+If the feature is NOT present on the page or is not relevant to the elements listed below, return EXACTLY:
+"Error: The feature '${featureName}' was not found on this page. Please check the feature name and try again."
+
+Otherwise, generate comprehensive test cases for the feature: "${featureName}".
 
 Website Context:
 - Page: ${context.page}
@@ -48,15 +45,7 @@ Priority:
 `;
 
   try {
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.7,
-      },
-    });
-
-    const response = await result.response;
-    return response.text() || 'Failed to generate test cases.';
+    return await generateWithFallback(prompt, { temperature: 0.7 });
   } catch (error: any) {
     console.error('Error generating test cases with Gemini:', error);
     throw new Error(`Test case generation failed: ${error.message}`);

@@ -16,7 +16,12 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData> {
   const page = await browser.newPage();
 
   try {
-    await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+    // We use 'domcontentloaded' and a longer timeout because 'networkidle' can be 
+    // extremely slow on sites with heavy telemetry (like GitHub).
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    
+    // Give it a small extra buffer for dynamic content to settle
+    await page.waitForTimeout(3000);
 
     const data: ScrapedData = {
       page: "login", // Defaulting to login as per request focus
